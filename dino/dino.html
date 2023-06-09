@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>T-Rex Runner Game</title>
+  <style>
+    body {
+      background-color: black;
+      overflow: hidden;
+    }
+
+    #game-container {
+      position: relative;
+      width: 600px;
+      height: 500px;
+      margin: 0 auto;
+      border: 1px solid white;
+      overflow: hidden;
+    }
+
+    #dino {
+      position: absolute;
+      bottom: 0;
+      width: 50px;
+      height: 50px;
+      background-image: url('dinosaur.png');
+      background-repeat: no-repeat;
+      background-size: contain;
+    }
+
+    .obstacle {
+      position: absolute;
+      bottom: 0;
+      width: 50px;
+      height: 50px;
+    }
+
+    .tree {
+      background-image: url('tree.png');
+      background-repeat: no-repeat;
+      background-size: contain;
+      left: 100%;
+      animation: treeLoop 3s infinite linear;
+    }
+
+    .bird {
+      background-image: url('bird.png');
+      background-repeat: no-repeat;
+      background-size: contain;
+      left: 100%;
+      animation: birdLoop 2s infinite linear;
+    }
+
+    @keyframes treeLoop {
+      0% {
+        left: 100%;
+      }
+      100% {
+        left: -50px;
+      }
+    }
+
+    @keyframes birdLoop {
+      0% {
+        left: 100%;
+      }
+      100% {
+        left: -50px;
+      }
+    }
+
+    #score-bar {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      color: white;
+      font-size: 24px;
+    }
+  </style>
+</head>
+<body>
+  <div id="game-container">
+    <div id="dino"></div>
+    <div id="score-bar">Score: 0</div>
+  </div>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", function(event) {
+      const gameContainer = document.getElementById("game-container");
+      const dino = document.getElementById("dino");
+      const scoreBar = document.getElementById("score-bar");
+      let isJumping = false;
+      let gameOver = false;
+      let score = 0;
+
+      function jump() {
+        if (!isJumping) {
+          isJumping = true;
+          let position = 0;
+          let interval = setInterval(function() {
+            if (position === 150) {
+              clearInterval(interval);
+
+              let downInterval = setInterval(function() {
+                if (position === 0) {
+                  clearInterval(downInterval);
+                  isJumping = false;
+                }
+
+                position -= 10;
+                dino.style.bottom = position + "px";
+              }, 20);
+            }
+
+            position += 10;
+            dino.style.bottom = position + "px";
+
+            checkCollision();
+          }, 20);
+        }
+      }
+
+      function checkCollision() {
+        const obstacles = document.querySelectorAll(".obstacle");
+        obstacles.forEach(function(obstacle) {
+          if (isColliding(dino, obstacle)) {
+            gameOver = true;
+            clearInterval(gameInterval);
+            setTimeout(function() {
+              alert("Game Over!");
+              gameOver = false; // Resetting the game over state
+            }, 100);
+          }
+        });
+      }
+
+      function isColliding(dino, obstacle) {
+        const dinoRect = dino.getBoundingClientRect();
+        const obstacleRect = obstacle.getBoundingClientRect();
+
+        return (
+          dinoRect.bottom >= obstacleRect.top &&
+          dinoRect.top <= obstacleRect.bottom &&
+          dinoRect.right >= obstacleRect.left &&
+          dinoRect.left <= obstacleRect.right
+        );
+      }
+
+      function resetGame() {
+        isJumping = false;
+        gameOver = false;
+        score = 0;
+        scoreBar.textContent = "Score: 0";
+        dino.style.bottom = "0";
+        gameContainer.innerHTML = '<div id="dino"></div>';
+        startGame();
+      }
+
+      function startGame() {
+        document.addEventListener("keydown", function(event) {
+          if (event.code === "Space") {
+            if (gameOver) {
+              resetGame();
+            } else {
+              jump();
+            }
+          }
+        });
+
+        let gameInterval = setInterval(function() {
+          if (!gameOver) {
+            const randomTime = Math.random() * 3000 + 1000;
+            const obstacleType = Math.random() < 0.5 ? "tree" : "bird";
+            const obstacle = document.createElement("div");
+            obstacle.className = "obstacle " + obstacleType;
+            gameContainer.appendChild(obstacle);
+
+            setTimeout(function() {
+              obstacle.remove();
+            }, 6000);
+
+            if (obstacleType === "tree") {
+              obstacle.style.animation = "treeLoop 3s infinite linear";
+            } else {
+              obstacle.style.animation = "birdLoop 2s infinite linear";
+            }
+
+            score++;
+            scoreBar.textContent = "Score: " + score;
+          }
+        }, 2000);
+      }
+
+      startGame();
+    });
+  </script>
+</body>
+</html>
